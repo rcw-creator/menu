@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Simulator v3 with Analytics</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #d7e1ec, #f1f3f4);
+      font-family: "Roboto", Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .iphone {
+      width: 400px;
+      height: 750px;
+      border-radius: 36px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .topbar {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      font-weight: bold;
+    }
+
+    .inbox,
+    .email-view {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .email-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(6px);
+      transition: background 0.2s;
+    }
+
+    .email-item:hover {
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .email-sender {
+      font-weight: 500;
+      font-size: 14px;
+      color: #202124;
+    }
+
+    .email-subject {
+      font-size: 14px;
+      color: #202124;
+      font-weight: 500;
+    }
+
+    .email-preheader {
+      font-size: 12px;
+      color: #70757a;
+    }
+
+    .email-header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(8px);
+    }
+
+    .email-body {
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #202124;
+    }
+
+    .email-body img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+
+    .cta-btn {
+      display: inline-block;
+      padding: 10px 16px;
+      margin-top: 12px;
+      background: #1a73e8;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-btn {
+      cursor: pointer;
+      color: #1a73e8;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .analytics-panel {
+      margin-top: 20px;
+    }
+
+    .variation-panel,
+    .analytics-panel {
+      width: 260px;
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .variation-panel h3,
+    .analytics-panel h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+    }
+
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #1a73e8;
+      cursor: pointer;
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+
+    .slider-labels span {
+      font-size: 12px;
+      color: #555;
+    }
+
+    .slider-labels span.active {
+      font-weight: bold;
+      color: #1a73e8;
+    }
+
+    .radio-group label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .collapsible {
+      background: rgba(240, 240, 240, 0.7);
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 6px;
+      text-align: left;
+    }
+
+    .collapsible.active {
+      background: rgba(220, 220, 220, 0.9);
+    }
+
+    .collapsible-content {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .highlight {
+      position: relative;
+      border: 2px dashed rgba(26, 115, 232, 0.6);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .highlight-label {
+      position: absolute;
+      top: 2px;
+      right: 6px;
+      font-size: 11px;
+      background: rgba(26, 115, 232, 0.8);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Analytics */
+    .analytics-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .analytics-bar span {
+      width: 90px;
+    }
+
+    .bar {
+      flex: 1;
+      height: 12px;
+      background: #e0e0e0;
+      border-radius: 6px;
+      margin-right: 6px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: #1a73e8;
+      border-radius: 6px;
+      width: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Variations panel -->
+  <div>
+    <div class="variation-panel" id="variationPanel">
+      <h3>Email Presets</h3>
+      <div class="radio-group" id="presetRadios"></div>
+
+      <button class="collapsible" id="toggleOptions">More Options</button>
+      <div class="collapsible-content" id="moreOptions">
+        <h3>Picture + Button Options</h3>
+        <div class="slider-group">
+          <label>Picture Options</label>
+          <input type="range" id="pictureSlider" min="0" max="0" value="0" step="1">
+          <div id="pictureLabels" class="slider-labels"></div>
+        </div>
+        <div class="slider-group">
+          <label>Button Options</label>
+          <input type="range" id="buttonSlider" min="0" max="0" value="0" step="1">
+          <div id="buttonLabels" class="slider-labels"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Panel -->
+    <div class="analytics-panel" id="analyticsPanel">
+      <h3>Preset Analytics</h3>
+      <div class="analytics-bar"><span>Preset 1</span>
+        <div class="bar">
+          <div class="bar-fill" id="bar1"></div>
+        </div><span id="percent1">0%</span>
+      </div>
+      <div class="analytics-bar"><span>Preset 2</span>
+        <div class="bar">
+          <div class="bar-fill" id="bar2"></div>
+        </div><span id="percent2">0%</span>
+      </div>
+      <div class="analytics-bar"><span>Preset 3</span>
+        <div class="bar">
+          <div class="bar-fill" id="bar3"></div>
+        </div><span id="percent3">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- iPhone simulator -->
+  <div class="iphone">
+    <div class="topbar">
+      <div class="back-btn" id="backBtn" style="display:none">← Back</div>
+      <span id="timeDisplay">--:--</span>
+    </div>
+    <div class="inbox" id="inbox"></div>
+    <div class="email-view" id="emailView" style="display:none"></div>
+  </div>
+
+  <script>
+    const emails = [{
+      sender: "Brand A",
+      template: {
+        subject: "Welcome aboard!",
+        preheader: "Thanks for joining us. Get ready for premium tips...",
+        body: `<p>Hi there,</p><p>We’re thrilled to have you with us.</p><div style="margin-top: 500px"></div>`,
+        pictures: [
+          "https://picsum.photos/360/200?random=11",
+          "https://picsum.photos/360/200?random=12",
+          "https://picsum.photos/360/200?random=13"
+        ],
+        buttons: ["Explore Now", "Get Started", "Join Today"]
+      },
+      presets: [
+        { name: "A Thanks for joining!", pictureIdx: 2, buttonIdx: 0 },
+        { name: "A Special offer inside", pictureIdx: 1, buttonIdx: 1 },
+        { name: "A Don’t miss out", pictureIdx: 2, buttonIdx: 2 }
+      ]
+    }];
+
+    const inbox = document.getElementById("inbox");
+    const emailView = document.getElementById("emailView");
+    const backBtn = document.getElementById("backBtn");
+    const variationPanel = document.getElementById("variationPanel");
+    const analyticsPanel = document.getElementById("analyticsPanel");
+    const presetRadios = document.getElementById("presetRadios");
+    const pictureSlider = document.getElementById("pictureSlider");
+    const pictureLabels = document.getElementById("pictureLabels");
+    const buttonSlider = document.getElementById("buttonSlider");
+    const buttonLabels = document.getElementById("buttonLabels");
+    const toggleOptions = document.getElementById("toggleOptions");
+    const moreOptions = document.getElementById("moreOptions");
+
+    let currentEmailIndex = null;
+    let currentPresetIndex = 0;
+    let currentPictureIndex = 0;
+    let currentButtonIndex = 0;
+    let optionsExpanded = false;
+    let presetCounts = [0, 0, 0];
+
+    function renderInbox() {
+      inbox.innerHTML = "";
+      emails.forEach((email, idx) => {
+        const template = email.template;
+        const item = document.createElement("div");
+        item.className = "email-item";
+        item.setAttribute("data-index", idx);
+        item.innerHTML = `
+          <div class="email-sender">${email.sender}</div>
+          <div class="email-subject">${template.subject}</div>
+          <div class="email-preheader">${template.preheader}</div>`;
+        item.addEventListener("click", () => openEmail(idx, 0, 0, 0, true));
+        inbox.appendChild(item);
+      });
+    }
+
+    function openEmail(emailIndex, presetIndex, pictureIndex, buttonIndex, usePreset) {
+      const email = emails[emailIndex];
+      const template = email.template;
+
+      currentEmailIndex = emailIndex;
+      currentPresetIndex = presetIndex;
+      currentPictureIndex = usePreset ? email.presets[presetIndex].pictureIdx : pictureIndex;
+      currentButtonIndex = usePreset ? email.presets[presetIndex].buttonIdx : buttonIndex;
+
+      const pictureUrl = template.pictures[currentPictureIndex];
+      const buttonText = template.buttons[currentButtonIndex];
+
+      inbox.style.display = "none";
+      emailView.style.display = "block";
+      backBtn.style.display = "block";
+      variationPanel.style.display = "flex";
+      analyticsPanel.style.display = "flex";
+
+      // Conditional highlights
+      const picSection = optionsExpanded ?
+        `<div class="highlight"><img src="${pictureUrl}"/><div class="highlight-label">Picture ${currentPictureIndex + 1}</div></div>` :
+        `<img src="${pictureUrl}"/>`;
+
+      const btnSection = optionsExpanded ?
+        `<div class="highlight"><a href="#" class="cta-btn">${buttonText}</a><div class="highlight-label">${buttonText}</div></div>` :
+        `<a href="#" class="cta-btn">${buttonText}</a>`;
+
+      emailView.innerHTML = `
+        <div class="email-header"><div><strong>${email.sender}</strong></div><div>${template.subject}</div></div>
+        <div class="email-body">${picSection}${template.body}${btnSection}</div>`;
+
+      presetRadios.innerHTML = email.presets.map((p, i) =>
+        `<label><input type="radio" name="presets" value="${i}" ${i === presetIndex ? "checked" : ""}> ${p.name}</label>`
+      ).join("");
+
+      document.querySelectorAll('input[name="presets"]').forEach(radio => {
+        radio.addEventListener("change", e => {
+          const idx = parseInt(e.target.value);
+          presetCounts[idx]++;
+          updateAnalytics();
+          openEmail(emailIndex, idx, 0, 0, true);
+        });
+      });
+
+      pictureSlider.max = template.pictures.length - 1;
+      pictureSlider.value = currentPictureIndex;
+      pictureLabels.innerHTML = template.pictures.map((_, i) =>
+        `<span class="${i === currentPictureIndex ? "active" : ""}">${i + 1}</span>`
+      ).join("");
+      pictureSlider.oninput = e => {
+        currentPictureIndex = parseInt(e.target.value);
+        openEmail(emailIndex, presetIndex, currentPictureIndex, currentButtonIndex, false);
+      };
+
+      buttonSlider.max = template.buttons.length - 1;
+      buttonSlider.value = currentButtonIndex;
+      buttonLabels.innerHTML = template.buttons.map((b, i) =>
+        `<span class="${i === currentButtonIndex ? "active" : ""}">${b}</span>`
+      ).join("");
+      buttonSlider.oninput = e => {
+        currentButtonIndex = parseInt(e.target.value);
+        openEmail(emailIndex, presetIndex, currentPictureIndex, currentButtonIndex, false);
+      };
+    }
+
+    function updateAnalytics() {
+      const total = presetCounts.reduce((a, b) => a + b, 0) || 1;
+      presetCounts.forEach((count, i) => {
+        const percent = Math.round((count / total) * 100);
+        document.getElementById(`bar${i + 1}`).style.width = percent + "%";
+        document.getElementById(`percent${i + 1}`).textContent = percent + "%";
+      });
+    }
+
+    toggleOptions.addEventListener("click", () => {
+      optionsExpanded = !optionsExpanded;
+      if (optionsExpanded) {
+        toggleOptions.classList.add("active");
+        toggleOptions.textContent = "Hide Options";
+        moreOptions.style.display = "flex";
+      } else {
+        toggleOptions.classList.remove("active");
+        toggleOptions.textContent = "More Options";
+        moreOptions.style.display = "none";
+      }
+      if (currentEmailIndex !== null) {
+        openEmail(currentEmailIndex, currentPresetIndex, currentPictureIndex, currentButtonIndex, false);
+      }
+    });
+
+    backBtn.addEventListener("click", () => {
+      inbox.style.display = "block";
+      emailView.style.display = "none";
+      backBtn.style.display = "none";
+      variationPanel.style.display = "none";
+      analyticsPanel.style.display = "none";
+    });
+
+    renderInbox();
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById("timeDisplay").textContent =
+        now.getHours().toString().padStart(2, "0") + ":" +
+        now.getMinutes().toString().padStart(2, "0");
+    }
+    updateTime(); setInterval(updateTime, 60000);
+  </script>
+</body>
+
+</html>
