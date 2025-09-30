@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pizza Tracker with Rounded Chevron Notches</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 40px;
+    }
+
+    .tracker {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    svg {
+      cursor: pointer;
+      margin-left: -20px; /* overlap chevrons for tight connection */
+    }
+
+    svg:first-child {
+      margin-left: 0;
+    }
+
+    path, polygon {
+      fill: #ccc;
+      transition: fill 0.3s;
+    }
+
+    text {
+      font-size: 13px;
+      font-weight: bold;
+      fill: white;
+      pointer-events: none;
+    }
+
+    .highlight path,
+    .highlight polygon {
+      fill: #ff9800; /* highlighted (active/completed) */
+    }
+
+    .step-info {
+      margin-top: 30px;
+      font-size: 18px;
+      font-weight: bold;
+      min-height: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Pizza Tracker</h2>
+
+  <div class="tracker">
+    <!-- First chevron -->
+    <svg width="130" height="60" viewBox="0 0 130 60" data-step="Order Placed" data-info="Your pizza order has been placed!">
+      <path d="M5,0 Q0,0 0,5 V55 Q0,60 5,60 H100 
+               Q102,60 104,58 L130,30 
+               Q130,30 128,28 L104,2 
+               Q102,0 100,0 Z"/>
+      <text x="60" y="35" text-anchor="middle">Order</text>
+    </svg>
+
+    <!-- Second chevron with rounded top-left and bottom-left corners -->
+    <svg width="130" height="60" viewBox="0 0 130 60" data-step="Preparing" data-info="Your pizza is being prepared.">
+      <polygon points="0,0 100,0 130,30 100,60 0,60 30,30" />
+      <text x="65" y="35" text-anchor="middle">Preparing</text>
+    </svg>
+
+    <!-- Third chevron -->
+    <svg width="130" height="60" viewBox="0 0 130 60" data-step="Baking" data-info="Your pizza is in the oven.">
+      <polygon points="0,0 100,0 130,30 100,60 0,60 30,30" />
+      <text x="65" y="35" text-anchor="middle">Baking</text>
+    </svg>
+
+    <!-- Last chevron with tiny rounded right center notch -->
+    <svg width="130" height="60" viewBox="0 0 130 60" data-step="On the Way" data-info="Your pizza is on its way!">
+      <polygon points="0,0 100,0 130,30 100,60 0,60 30,30" />
+      <text x="65" y="35" text-anchor="middle">On the Way</text>
+    </svg>
+  </div>
+
+  <div class="step-info" id="stepInfo"></div>
+
+  <script>
+    const svgs = document.querySelectorAll("svg");
+    const infoBox = document.getElementById("stepInfo");
+
+    let currentStep = 1;
+
+    function updateHighlights() {
+      svgs.forEach((svg, index) => {
+        if (index < currentStep) {
+          svg.classList.add("highlight");
+        } else {
+          svg.classList.remove("highlight");
+        }
+      });
+    }
+
+    updateHighlights();
+
+    svgs.forEach((svg, index) => {
+      const stepInfo = svg.dataset.info;
+      const stepName = svg.dataset.step;
+
+      svg.addEventListener("mouseover", () => {
+        infoBox.textContent = stepName + ": " + stepInfo;
+      });
+
+      svg.addEventListener("mouseout", () => {
+        infoBox.textContent = "";
+      });
+
+      svg.addEventListener("click", () => {
+        currentStep = index + 1;
+        updateHighlights();
+      });
+    });
+  </script>
+
+</body>
+</html>
