@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Health Dashboard</title>
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(145deg, rgba(230,240,255,0.8), rgba(210,220,250,0.6));
+    backdrop-filter: blur(14px);
+    min-height: 100vh;
+    margin: 0;
+    padding: 60px 0;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .dashboard {
+    background: rgba(255,255,255,0.55);
+    border-radius: 25px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.12);
+    padding: 50px 60px;
+    backdrop-filter: blur(20px);
+    width: 92%;
+    max-width: 1400px;
+    min-height: 700px;
+    position: relative;
+  }
+
+  h1 {
+    margin-top: 0;
+    font-weight: 700;
+    font-size: 2.2rem;
+    margin-bottom: 30px;
+    color: #2b2b2b;
+  }
+
+  .timestamp {
+    font-size: 14px;
+    color: #777;
+    position: absolute;
+    bottom: 15px;
+    left: 30px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 16px 20px;
+  }
+
+  th {
+    font-weight: 600;
+    color: #555;
+    font-size: 15px;
+    background: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+  }
+
+  tr + tr td {
+    border-top: 1px solid rgba(180,180,180,0.3);
+  }
+
+  tbody tr:hover td {
+    background: rgba(123, 97, 255, 0.07);
+    transition: background 0.25s ease;
+  }
+
+  .subcategory {
+    background: rgba(255,255,255,0.6);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--color);
+    border-left: 7px solid var(--color);
+    border-radius: 12px;
+    cursor: pointer;
+  }
+
+  .subcategory td {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+
+  .metric {
+    font-weight: 500;
+    padding-left: 30px;
+    font-size: 1rem;
+  }
+
+  .description {
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 22px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+    color: white;
+    white-space: nowrap;
+  }
+
+  .good { background: linear-gradient(135deg, #4cd964, #34c759); }
+  .warn { background: linear-gradient(135deg, #ffd60a, #ffcc00); color:#333; }
+  .bad  { background: linear-gradient(135deg, #ff6b6b, #ff3b30); }
+
+  .collapsed-row {
+    display: none;
+  }
+
+  .arrow {
+    margin-right: 10px;
+    transition: transform 0.25s ease;
+    font-size: 1.2rem;
+  }
+
+  .collapsed .arrow {
+    transform: rotate(-90deg);
+  }
+</style>
+</head>
+<body>
+<div class="dashboard">
+  <h1>🏥 Team Health Dashboard</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th>Person A</th>
+        <th>Person B</th>
+        <th>Person C</th>
+        <th>Person D</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Cardio Health -->
+      <tr class="subcategory" style="--color:#7B61FF;" data-group="cardio">
+        <td colspan="5"><span class="arrow">▼</span>Cardio Health</td>
+      </tr>
+      <tr class="cardio">
+        <td class="metric">
+          HRV
+          <div class="description">Heart Rate Variability — higher indicates better recovery and stress balance.</div>
+        </td>
+        <td><span class="pill good">Good</span></td>
+        <td><span class="pill warn">Warning</span></td>
+        <td><span class="pill bad">Poor</span></td>
+        <td><span class="pill good">Good</span></td>
+      </tr>
+      <tr class="cardio">
+        <td class="metric">
+          VO₂max
+          <div class="description">Oxygen uptake efficiency — reflects cardiovascular and endurance capacity.</div>
+        </td>
+        <td><span class="pill good">Good</span></td>
+        <td><span class="pill good">Good</span></td>
+        <td><span class="pill warn">Warning</span></td>
+        <td><span class="pill bad">Poor</span></td>
+      </tr>
+
+      <!-- Sleep -->
+      <tr class="subcategory" style="--color:#00BFA6;" data-group="sleep">
+        <td colspan="5"><span class="arrow">▼</span>Sleep</td>
+      </tr>
+      <tr class="sleep">
+        <td class="metric">
+          Deep Sleep %
+          <div class="description">Proportion of nightly sleep spent in restorative deep sleep stages.</div>
+        </td>
+        <td><span class="pill bad">Poor</span></td>
+        <td><span class="pill good">Good</span></td>
+        <td><span class="pill good">Good</span></td>
+        <td><span class="pill warn">Warning</span></td>
+      </tr>
+      <tr class="sleep">
+        <td class="metric">
+          Restfulness
+          <div class="description">Overall sleep quality measured through movement and heart rate stability.</div>
+        </td>
+        <td><span class="pill warn">Warning</span></td>
+        <td><span class="pill good">Good</span></td>
+        <td><span class="pill bad">Poor</span></td>
+        <td><span class="pill good">Good</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="timestamp">Last updated: <span id="time"></span></div>
+</div>
+
+<script>
+  function updateTime() {
+    const now = new Date();
+    document.getElementById('time').textContent =
+      now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+  }
+  updateTime();
+
+  // Collapsible groups
+  document.querySelectorAll('.subcategory').forEach(header => {
+    header.addEventListener('click', () => {
+      const group = header.dataset.group;
+      const rows = document.querySelectorAll(`.${group}`);
+      const isCollapsed = header.classList.toggle('collapsed');
+      header.querySelector('.arrow').textContent = isCollapsed ? '▶' : '▼';
+      rows.forEach(row => {
+        row.style.display = isCollapsed ? 'none' : '';
+      });
+    });
+  });
+</script>
+</body>
+</html>
