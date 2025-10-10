@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Draggable + Clickable + Copyable Query UI</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        #diagram {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+        }
+
+        #panel {
+            position: relative;
+            flex: 0 0 66.6667%;
+            border-right: 1px solid #ccc;
+            overflow: hidden;
+            background-color: #0f1b2b;
+            background-image:
+                linear-gradient(to right, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+                linear-gradient(to right, rgba(255, 255, 255, 0.35) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.35) 1px, transparent 1px);
+            background-size:
+                20px 20px,
+                20px 20px,
+                100px 100px,
+                100px 100px;
+        }
+
+        #sidepane {
+            flex: 1 1 33.3333%;
+            background: #fafafa;
+            padding: 16px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .box {
+            position: absolute;
+            width: 160px;
+            height: 80px;
+            background: #f0f8ff;
+            border: 2px solid #4a90e2;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .box .title {
+            font-weight: bold;
+            margin-top: 12px;
+        }
+
+        .box .ts {
+            margin-top: 6px;
+            font-size: 0.85em;
+            color: #555;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .arrow-path {
+            fill: none;
+            stroke: #a0d0ff;
+            stroke-width: 1;
+            stroke-dasharray: 6 4;
+            marker-end: url(#arrowHead);
+        }
+
+        #sidepane h2 {
+            margin-top: 0;
+        }
+
+        #sidepane pre {
+            background: #eee;
+            padding: 8px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 0;
+            position: relative;
+            /* for icon overlay */
+        }
+
+        .copy-icon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+
+        .copy-icon:hover {
+            opacity: 1;
+        }
+
+        .copy-feedback {
+            position: absolute;
+            top: 8px;
+            right: 36px;
+            font-size: 0.85em;
+            color: green;
+            display: none;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="diagram">
+        <div id="panel">
+            <div id="dw1" class="box" style="top: 50px; left: 100px;" data-table="dw_sales">
+                <div class="title">DW_Sales</div>
+                <div class="ts">2025-10-09 14:23</div>
+            </div>
+            <div id="dw2" class="box" style="top: 50px; left: 400px;" data-table="dw_customers">
+                <div class="title">DW_Customers</div>
+                <div class="ts">2025-10-09 13:55</div>
+            </div>
+            <div id="derived1" class="box" style="top: 300px; left: 250px;" data-table="report_monthly">
+                <div class="title">Report_Monthly</div>
+                <div class="ts">2025-10-09 15:05</div>
+            </div>
+
+            <svg id="arrowsvg" width="100%" height="100%">
+                <defs>
+                    <marker id="arrowHead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#a0d0ff" />
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+        <div id="sidepane">
+            <h2>Table Info</h2>
+            <div id="infoContent">
+                <p>Click a block on the left to see details.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const connections = [];
+
+        const tableInfo = {
+            dw_sales: {
+                name: "DW_Sales",
+                columns: ["sale_id", "date", "customer_id", "amount", "product_id"],
+                sampleQuery: `SELECT date, SUM(amount) AS total_amount
+FROM DW_Sales
+WHERE date >= '2025-01-01'
+GROUP BY date;`
+            },
+            dw_customers: {
+                name: "DW_Customers",
+                columns: ["customer_id", "name", "region", "signup_date"],
+                sampleQuery: `SELECT region, COUNT(*) AS cnt
+FROM DW_Customers
+GROUP BY region;`
+            },
+            report_monthly: {
+                name: "Report_Monthly",
+                columns: ["month", "total_sales", "num_customers"],
+                sampleQuery: `SELECT month, total_sales, num_customers
+FROM Report_Monthly
+ORDER BY month;`
+            }
+        };
+
+        function getBoxRect(el) {
+            return el.getBoundingClientRect();
+        }
+        function getPanelRect() {
+            return document.getElementById('panel').getBoundingClientRect();
+        }
+
+        function computeAttachPoints(boxA, boxB) {
+            const ra = getBoxRect(boxA);
+            const rb = getBoxRect(boxB);
+            const panelRect = getPanelRect();
+
+            const a = {
+                x: ra.left - panelRect.left,
+                y: ra.top - panelRect.top,
+                w: ra.width,
+                h: ra.height
+            };
+            const b = {
+                x: rb.left - panelRect.left,
+                y: rb.top - panelRect.top,
+                w: rb.width,
+                h: rb.height
+            };
+
+            const centerA = { x: a.x + a.w / 2, y: a.y + a.h / 2 };
+            const centerB = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+            const dx = centerB.x - centerA.x;
+            const dy = centerB.y - centerA.y;
+
+            let sideA, sideB;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                sideA = dx > 0 ? 'right' : 'left';
+                sideB = dx > 0 ? 'left' : 'right';
+            } else {
+                sideA = dy > 0 ? 'bottom' : 'top';
+                sideB = dy > 0 ? 'top' : 'bottom';
+            }
+
+            function pointOnSide(r, side) {
+                switch (side) {
+                    case 'left': return { x: r.x, y: r.y + r.h / 2 };
+                    case 'right': return { x: r.x + r.w, y: r.y + r.h / 2 };
+                    case 'top': return { x: r.x + r.w / 2, y: r.y };
+                    case 'bottom': return { x: r.x + r.w / 2, y: r.y + r.h };
+                }
+            }
+
+            const pA = pointOnSide(a, sideA);
+            const pB = pointOnSide(b, sideB);
+            return { pA, pB, sideA, sideB };
+        }
+
+        function drawConnection(boxA, boxB, svg) {
+            const { pA, pB, sideA, sideB } = computeAttachPoints(boxA, boxB);
+            const offset = 20;
+            let c1 = { x: pA.x, y: pA.y };
+            let c2 = { x: pB.x, y: pB.y };
+
+            if (sideA === 'left') c1.x -= offset;
+            else if (sideA === 'right') c1.x += offset;
+            else if (sideA === 'top') c1.y -= offset;
+            else if (sideA === 'bottom') c1.y += offset;
+
+            if (sideB === 'left') c2.x -= offset;
+            else if (sideB === 'right') c2.x += offset;
+            else if (sideB === 'top') c2.y -= offset;
+            else if (sideB === 'bottom') c2.y += offset;
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const d = `M ${pA.x},${pA.y} C ${c1.x},${c1.y} ${c2.x},${c2.y} ${pB.x},${pB.y}`;
+            path.setAttribute("d", d);
+            path.classList.add("arrow-path");
+            svg.appendChild(path);
+            return path;
+        }
+
+        function setupConnections() {
+            const svg = document.getElementById('arrowsvg');
+            Array.from(svg.querySelectorAll('path.arrow-path')).forEach(p => p.remove());
+            connections.forEach(conn => {
+                conn.pathElement = drawConnection(conn.from, conn.to, svg);
+            });
+        }
+
+        function makeDraggable(el) {
+            let isDragging = false;
+            let startX, startY;
+            let origX, origY;
+
+            el.addEventListener('mousedown', e => {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                const style = window.getComputedStyle(el);
+                origX = parseInt(style.left, 10);
+                origY = parseInt(style.top, 10);
+                el.style.zIndex = 1000;
+                e.preventDefault();
+            });
+            window.addEventListener('mousemove', e => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                let newLeft = origX + dx;
+                let newTop = origY + dy;
+
+                const panelRect = getPanelRect();
+                const boxRect = el.getBoundingClientRect();
+                const boxW = boxRect.width;
+                const boxH = boxRect.height;
+
+                if (newLeft < 0) newLeft = 0;
+                if (newTop < 0) newTop = 0;
+                const maxLeft = panelRect.width - boxW;
+                const maxTop = panelRect.height - boxH;
+                if (newLeft > maxLeft) newLeft = maxLeft;
+                if (newTop > maxTop) newTop = maxTop;
+
+                el.style.left = newLeft + 'px';
+                el.style.top = newTop + 'px';
+
+                setupConnections();
+            });
+            window.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    el.style.zIndex = '';
+                }
+            });
+        }
+
+
+        function showTableInfo(tableKey) {
+            const info = tableInfo[tableKey];
+            const container = document.getElementById('infoContent');
+            if (!info) {
+                container.innerHTML = `<p>No info available for ${tableKey}.</p>`;
+                return;
+            }
+            container.innerHTML = `
+      <h3>${info.name}</h3>
+      <p><strong>Columns:</strong> ${info.columns.join(', ')}</p>
+      <p><strong>Sample Query:</strong></p>
+      <div style="position: relative; display: inline-block; width: 100%;">
+        <pre id="sampleQueryBlock" style="margin:0; padding: 8px; background:#eee; border-radius:4px; overflow-x:auto;">
+${info.sampleQuery}
+        </pre>
+        <img class="copy-icon" id="copyIcon" src="data:image/svg+xml;base64,${btoa(`
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1
+             .9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+          </svg>`)}" title="Copy query" style="position: absolute; top: 8px; right: 8px; width:24px; height:24px; cursor: pointer; opacity:0.8;" />
+        <span class="copy-feedback" id="copyFeedback" style="position:absolute; top:8px; right:40px; color:green; display:none;">Copied!</span>
+      </div>
+    `;
+
+            const copyIcon = document.getElementById('copyIcon');
+            const feedbackSpan = document.getElementById('copyFeedback');
+            copyIcon.addEventListener('click', () => {
+                const txt = info.sampleQuery;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(txt)
+                        .then(() => {
+                            feedbackSpan.style.display = 'inline';
+                            setTimeout(() => feedbackSpan.style.display = 'none', 1500);
+                        })
+                        .catch(_ => fallbackCopyText(txt, feedbackSpan));
+                } else {
+                    fallbackCopyText(txt, feedbackSpan);
+                }
+            });
+        }
+
+        function fallbackCopyText(text, feedbackSpan) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {
+                document.execCommand('copy');
+                feedbackSpan.style.display = 'inline';
+                setTimeout(() => feedbackSpan.style.display = 'none', 1500);
+            } catch (err) {
+                console.error('Copy fallback failed', err);
+            }
+            document.body.removeChild(ta);
+        }
+
+        window.addEventListener('load', () => {
+            const b1 = document.getElementById('dw1');
+            const b2 = document.getElementById('dw2');
+            const d1 = document.getElementById('derived1');
+
+            makeDraggable(b1);
+            makeDraggable(b2);
+            makeDraggable(d1);
+
+            connections.push({ from: b1, to: d1, pathElement: null });
+            connections.push({ from: b2, to: d1, pathElement: null });
+
+            setupConnections();
+
+            [b1, b2, d1].forEach(el => {
+                el.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const tbl = el.getAttribute('data-table');
+                    showTableInfo(tbl);
+                });
+            });
+        });
+
+
+    </script>
+</body>
+
+</html>
