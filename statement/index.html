@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statement Archive — Multi Bank Panels</title>
+  <style>
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.8);
+      --glass-border: rgba(200, 200, 200, 0.8);
+      --glass-shadow: rgba(0, 0, 0, 0.15);
+      --panel-radius: 12px;
+      --blur-amount: 8px;
+      --transition-fast: 0.25s ease;
+      --text-color: #333;
+      --link-hover-bg: rgba(0, 0, 0, 0.05);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #fafafa;
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      margin: 20px 0;
+      font-size: 2em;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 1200px;
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      box-sizing: border-box;
+      flex-wrap: wrap;
+    }
+
+    .panel {
+      flex: 1 1 250px; /* allow wrapping */
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--blur-amount));
+      -webkit-backdrop-filter: blur(var(--blur-amount));
+      border: 1px solid var(--glass-border);
+      border-radius: var(--panel-radius);
+      box-shadow: 0 6px 24px var(--glass-shadow);
+      padding: 16px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      font-size: 1.4em;
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 8px;
+      color: var(--text-color);
+    }
+
+    .accordion-item {
+      margin-bottom: 10px;
+      border-radius: var(--panel-radius);
+      overflow: hidden;
+      background: var(--glass-bg);
+    }
+    .accordion-header {
+      padding: 12px;
+      cursor: pointer;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      position: relative;
+      transition: background var(--transition-fast);
+      font-weight: bold;
+      color: var(--text-color);
+    }
+    .accordion-header:hover {
+      background: rgba(240, 240, 240, 0.9);
+    }
+    .accordion-header::after {
+      content: "+";
+      position: absolute;
+      right: 16px;
+      font-size: 1.2em;
+      transition: transform var(--transition-fast);
+      color: var(--text-color);
+    }
+    .accordion-header.active::after {
+      transform: rotate(45deg);
+    }
+
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height var(--transition-fast);
+    }
+
+    .month-list {
+      list-style: none;
+      padding: 0 16px 16px 16px;
+      margin: 0;
+    }
+    .month-list li {
+      margin: 6px 0;
+    }
+    .month-link {
+      color: var(--text-color);
+      text-decoration: none;
+      cursor: pointer;
+      padding: 6px 10px;
+      display: inline-block;
+      border-radius: 6px;
+      transition: background var(--transition-fast);
+    }
+    .month-link:hover {
+      background: var(--link-hover-bg);
+    }
+
+    .section-title {
+      width: 95%;
+      max-width: 1200px;
+      padding-left: 16px;
+      font-size: 1.2em;
+      margin-top: 40px;
+      margin-bottom: 10px;
+      color: #555;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .info {
+      margin-top: 18px;
+      text-align: center;
+      color: #666;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <header>Statement Archive</header>
+
+  <!-- Bank A Panels -->
+  <div class="section-title">Bank A</div>
+  <div class="container" id="bankA-container">
+    <div class="panel" id="bankA-checking-panel">
+      <h2>Checking Account</h2>
+      <div class="accordion" id="bankA-checking-accordion"></div>
+    </div>
+    <div class="panel" id="bankA-savings-panel">
+      <h2>Savings Account</h2>
+      <div class="accordion" id="bankA-savings-accordion"></div>
+    </div>
+    <div class="panel" id="bankA-cc1-panel">
+      <h2>Credit Card 1</h2>
+      <div class="accordion" id="bankA-cc1-accordion"></div>
+    </div>
+    <div class="panel" id="bankA-cc2-panel">
+      <h2>Credit Card 2</h2>
+      <div class="accordion" id="bankA-cc2-accordion"></div>
+    </div>
+  </div>
+
+  <!-- Bank B Panels -->
+  <div class="section-title">Bank B</div>
+  <div class="container" id="bankB-container">
+    <div class="panel" id="bankB-checking-panel">
+      <h2>Checking Account</h2>
+      <div class="accordion" id="bankB-checking-accordion"></div>
+    </div>
+    <div class="panel" id="bankB-savings-panel">
+      <h2>Savings Account</h2>
+      <div class="accordion" id="bankB-savings-accordion"></div>
+    </div>
+    <div class="panel" id="bankB-cc1-panel">
+      <h2>Credit Card 1</h2>
+      <div class="accordion" id="bankB-cc1-accordion"></div>
+    </div>
+    <div class="panel" id="bankB-cc2-panel">
+      <h2>Credit Card 2</h2>
+      <div class="accordion" id="bankB-cc2-accordion"></div>
+    </div>
+  </div>
+
+  <div class="info" id="info">Click a month in any panel to download the statement.</div>
+
+  <script>
+    (function(){
+      // Sample base64 PDF
+      const samplePDF = "JVBERi0xLjQKJeLjz9MKNCAwIG9iago8PCAvVHlwZSAvUGFnZQovUGFyZW50IDMgMCBSCi9NZWRpYUJveCBbMCAwIDYxMiA3OTJdCi9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKNSAwIG9iago8PCAvTGVuZ3RoIDYzID4+CnN0cmVhbQpCVAovRjEgMjQgVGYKMTAwIDEwMCBUZAooSGVsbG8gU2FtcGxlKSBUagpFVAplbmRzdHJlYW0KZW5kb2JqCjYgMCBvYmoKPDwgL1R5cGUgL0NhdGFsb2cKL1BhZ2VzIDIgMCBSPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzCi9Db3VudCAxCi9LaWRzIFsgNCAwIFIgXSA+PgplbmRvYmoKMyAwIG9iago8PCAvVHlwZSAvUGFnZUxhYmVsIC9Db250ZW50cyA0IDAgUiA+PgplbmRvYmoKMSAwIG9iago8PCAvUHJvZHVjZXIgKEdQVCk+PgplbmRvYmoKeHJlZgowIDEwCjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDA5MCAwMDAwMCBu IAowMDAwMDAwMTYx IDAwMDAwIG4gCjAwMDAwMDAyNDcgMDAwMDAgbi AKMDAwMDAwMDM0MiAwMDAwMCBu IAowMDAwMDAwNDAzIDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgMTAgL1Jvb3QgNiAwIFIgL0luZm8gMSAwIFIgPj4Kc3RhcnR4cmVmCjQ1OQolJUVPRgo=";
+
+      // Data for Bank A
+      const bankA_statements = {
+        checking: {
+          "2023": { "Jan": samplePDF, "Feb": samplePDF },
+          "2024": { "Mar": samplePDF }
+        },
+        savings: {
+          "2023": { "Apr": samplePDF },
+          "2024": { "May": samplePDF, "Jun": samplePDF }
+        },
+        cc1: {
+          "2023": { "Jul": samplePDF }
+        },
+        cc2: {
+          "2024": { "Aug": samplePDF, "Sep": samplePDF }
+        }
+      };
+
+      // Data for Bank B (distinct sample data)
+      const bankB_statements = {
+        checking: {
+          "2022": { "January": samplePDF, "February": samplePDF },
+          "2023": { "March": samplePDF }
+        },
+        savings: {
+          "2022": { "April": samplePDF },
+          "2023": { "May": samplePDF }
+        },
+        cc1: {
+          "2022": { "June": samplePDF, "July": samplePDF }
+        },
+        cc2: {
+          "2023": { "October": samplePDF }
+        }
+      };
+
+      function buildAccordion(panelAccordionId, statementsObj) {
+        const acc = document.getElementById(panelAccordionId);
+        for (const year of Object.keys(statementsObj).sort()) {
+          const item = document.createElement('div');
+          item.className = 'accordion-item';
+
+          const header = document.createElement('div');
+          header.className = 'accordion-header';
+          header.textContent = year;
+          header.addEventListener('click', () => {
+            header.classList.toggle('active');
+            const content = header.nextElementSibling;
+            if (header.classList.contains('active')) {
+              content.style.maxHeight = content.scrollHeight + "px";
+            } else {
+              content.style.maxHeight = null;
+            }
+          });
+
+          const content = document.createElement('div');
+          content.className = 'accordion-content';
+
+          const ul = document.createElement('ul');
+          ul.className = 'month-list';
+          for (const month of Object.keys(statementsObj[year])) {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.textContent = month;
+            a.className = 'month-link';
+            a.href = "#";
+            a.addEventListener('click', (ev) => {
+              ev.preventDefault();
+              downloadMonth(statementsObj, year, month);
+            });
+            li.appendChild(a);
+            ul.appendChild(li);
+          }
+          content.appendChild(ul);
+
+          item.appendChild(header);
+          item.appendChild(content);
+          acc.appendChild(item);
+        }
+      }
+
+      function downloadMonth(statementsObj, year, month) {
+        const b64 = statementsObj[year][month];
+        const infoEl = document.getElementById('info');
+        if (!b64) {
+          infoEl.textContent = `No statement for ${month} ${year}.`;
+          return;
+        }
+        const clean = b64.replace(/\s+/g, "");
+        let binary;
+        try {
+          binary = atob(clean);
+        } catch (err) {
+          console.error("Base64 decode error:", err);
+          infoEl.textContent = `Failed to decode statement for ${month} ${year}.`;
+          return;
+        }
+        const len = binary.length;
+        const uint8 = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          uint8[i] = binary.charCodeAt(i);
+        }
+        const blob = new Blob([uint8], { type: "application/pdf" });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `Statement_${year}_${month}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+        infoEl.textContent = `Downloading: ${month} ${year}`;
+      }
+
+      // Build for Bank A
+      buildAccordion('bankA-checking-accordion', bankA_statements.checking);
+      buildAccordion('bankA-savings-accordion', bankA_statements.savings);
+      buildAccordion('bankA-cc1-accordion', bankA_statements.cc1);
+      buildAccordion('bankA-cc2-accordion', bankA_statements.cc2);
+
+      // Build for Bank B
+      buildAccordion('bankB-checking-accordion', bankB_statements.checking);
+      buildAccordion('bankB-savings-accordion', bankB_statements.savings);
+      buildAccordion('bankB-cc1-accordion', bankB_statements.cc1);
+      buildAccordion('bankB-cc2-accordion', bankB_statements.cc2);
+    })();
+  </script>
+</body>
+</html>
