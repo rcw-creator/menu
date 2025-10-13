@@ -1,5 +1,22 @@
+# weekly_gbm_full_pipeline.py
+# Requires: pip install reportlab matplotlib scikit-learn pandas numpy
 
-import os, re
+import os
+import re
+import io
+import json
+import base64
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score
+
+# ------------------ (BEGIN) Your create_gbm_report function (copied/adapted) ------------------
+# I used your create_gbm_report exactly (signature: output_path, report_data).
+# If you already have this function in a separate file, you can import it instead.
+import os as _os
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
@@ -12,7 +29,6 @@ from reportlab.platypus import (
 )
 from reportlab.pdfgen import canvas
 
-# ---------------- Font registration Latex ----------------
 def try_register_censcbk():
     font_dir = os.path.dirname(os.path.abspath(__file__))
     candidates = {
@@ -54,7 +70,6 @@ def face(name):
             "BoldItalic": "Times-BoldItalic"
         }[name]
 
-# ---------------- Page numbers ----------------
 class NumberedCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
         super(NumberedCanvas, self).__init__(*args, **kwargs)
@@ -79,7 +94,6 @@ class NumberedCanvas(canvas.Canvas):
         self.drawCentredString(page_w / 2.0, 0.45 * inch, text)
         self.restoreState()
 
-# ---------------- Header ----------------
 def draw_header(cnv, doc):
     try:
         cnv.setTitle(getattr(doc, "pdf_title", ""))
@@ -94,7 +108,6 @@ def draw_header(cnv, doc):
     cnv.drawString(x_offset, y_pos, getattr(doc, "model_date_header", ""))
     cnv.restoreState()
 
-# ---------------- Text formatting ----------------
 def emphasize_keywords_gray_italic(text):
     italic_face = face("Italic")
     def repl(m):
@@ -103,7 +116,6 @@ def emphasize_keywords_gray_italic(text):
     text = re.sub(r"\b(exploration)\b", repl, text, flags=re.IGNORECASE)
     return text
 
-# ---------------- Report builder ----------------
 def create_gbm_report(output_path, report_data):
     left_margin = 50
     right_margin = 40
@@ -189,34 +201,201 @@ def create_gbm_report(output_path, report_data):
 
     doc.build(story, canvasmaker=NumberedCanvas)
     print(f"✅ PDF generated: {output_path}")
+# ------------------ (END) create_gbm_report ------------------
 
-# ---------------- MAIN ----------------
+
+# ------------------ Pipeline: fake data, charts, PDFs, audit ------------------
+
+def fetch_data_fake():
+    """Generate fake dataset similar to your DB schema."""
+    np.random.seed(42)
+    experiments = [
+        "Referral_English_cMAB_GBM_",
+        "Referral_Spanish_cMAB_GBM_",
+        "Referral_Portuguese_cMAB_GBM_"
+    ]
+    start = datetime(2025, 8, 1)
+    weeks = [(start + timedelta(weeks=i)).strftime("%Y-W%U") for i in range(6)]
+    rows = []
+    for week in weeks:
+        for exp in experiments:
+            n = np.random.randint(800, 1200)
+            scores = np.random.beta(2, 5, size=n)
+            # create labels correlated with score (noisy)
+            probs = 0.2 + 0.6 * scores  # base rate scaled by score
+            labels = np.random.rand(n) < probs
+            for s, l in zip(scores, labels):
+                rows.append({
+                    "experiment_name": exp,
+                    "week": week,
+                    "model_prediction_score": float(s),
+                    "actual_success": bool(l)
+                })
+    df = pd.DataFrame(rows)
+    print(f"✅ Fake dataset rows: {len(df)}")
+    return df
+
+def create_lift_chart(df_exp, experiment_name, outpath):
+    """
+    Create lift chart with background bars for volume + line for lift.
+    Returns: auroc (float), lift_volume_pairs (list of (lift, volume)), and saved path.
+    """
+    os.makedirs(os.path.dirname(outpath) or ".", exist_ok=True)
+
+    y_true = df_exp["actual_success"].astype(int)
+    y_score = df_exp["model_prediction_score"].astype(float)
+    # guard: need at least one class present for roc_auc_score
+    try:
+        auroc = float(roc_auc_score(y_true, y_score))
+    except Exception:
+        auroc = float("nan")
+
+    # sort descending by score
+    df_sorted = df_exp.sort_values("model_prediction_score", ascending=False).reset_index(drop=True)
+
+    # create deciles (handle duplicates by 'duplicates="drop"' not available reliably for small groups,
+    # so we fallback to a rank-based approach)
+    try:
+        df_sorted["decile"] = pd.qcut(df_sorted["model_prediction_score"], 10, labels=False, duplicates="drop")
+        # ensure all 0..9 present: if less, reindex later
+    except Exception:
+        # fallback: use rank percentile
+        df_sorted["decile"] = (df_sorted["model_prediction_score"].rank(method="first", pct=True) * 10).astype(int)
+        df_sorted.loc[df_sorted["decile"] == 10, "decile"] = 9
+
+    # compute lift (avg success) and volume per decile, we want decile=0 as top scores (qcut labels are ascending)
+    # so map to rank where 1 = top decile
+    grouped = df_sorted.groupby("decile").agg(
+        lift=("actual_success", "mean"),
+        volume=("actual_success", "size")
+    ).sort_index(ascending=True)
+
+    # If qcut produced fewer than 10 bins, fill missing deciles with zeros
+    all_deciles = list(range(0, 10))
+    grouped = grouped.reindex(all_deciles, fill_value=0)
+
+    # We want decile 1 to be top scores, so reverse order for plotting (1..10)
+    lift_list = grouped["lift"].tolist()[::-1]      # top decile first
+    vol_list = grouped["volume"].tolist()[::-1]
+
+    # Plot: bars (volume scaled) behind line (lift)
+    fig, ax1 = plt.subplots(figsize=(5.2, 2.6))
+    # scale volume to be visually comparable
+    vol = np.array(vol_list)
+    if vol.max() > 0:
+        vol_scaled = vol / vol.max() * (max(lift_list) if max(lift_list) > 0 else 1)
+    else:
+        vol_scaled = vol
+
+    x = np.arange(1, len(lift_list) + 1)
+    ax1.bar(x, vol_scaled, color="#e0e0e0", alpha=0.7, width=0.8, label="Volume (scaled)")
+    ax1.plot(x, lift_list, marker="o", color="#1f77b4", linewidth=2, label="Lift")
+    ax1.set_xlabel("Decile (1 = top scores)")
+    ax1.set_ylabel("Average success rate")
+    ax1.set_title(f"{experiment_name}  (AUROC={np.nan if np.isnan(auroc) else round(auroc,3)})")
+    ax1.set_xticks(x)
+    ax1.set_xlim(0.5, len(x) + 0.5)
+
+    ax2 = ax1.twinx()
+    ax2.set_ylim(0, vol.max() if len(vol)>0 else 1)
+    ax2.set_ylabel("Volume (count)")
+
+    ax1.legend(loc="upper right", frameon=False)
+    plt.tight_layout()
+    plt.savefig(outpath, dpi=120)
+    plt.close(fig)
+
+    # return auroc, pairs (lift, volume)
+    lift_volume_pairs = [(float(round(l, 6) if not np.isnan(l) else 0.0), int(v)) for l, v in zip(lift_list, vol_list)]
+    return auroc, lift_volume_pairs, outpath
+
+def create_score_distribution_chart(df_exp, experiment_name, outpath):
+    os.makedirs(os.path.dirname(outpath) or ".", exist_ok=True)
+    plt.figure(figsize=(5.2, 2.6))
+    y_true = df_exp["actual_success"].astype(int)
+    y_score = df_exp["model_prediction_score"].astype(float)
+    plt.hist(y_score[y_true==1], bins=20, alpha=0.6, label="Success", color="#2ca02c")
+    plt.hist(y_score[y_true==0], bins=20, alpha=0.4, label="Failure", color="#d62728")
+    plt.legend(frameon=False, fontsize=8)
+    plt.title(f"Score distribution ({experiment_name})")
+    plt.xlabel("Model prediction score")
+    plt.ylabel("Count")
+    plt.tight_layout()
+    plt.savefig(outpath, dpi=120)
+    plt.close()
+
+# ---------------- generate weekly reports pipeline ----------------
+def generate_weekly_reports_and_audit():
+    df = fetch_data_fake()
+    os.makedirs("charts", exist_ok=True)
+    os.makedirs("reports", exist_ok=True)
+
+    audit_rows = []
+
+    for week, week_df in df.groupby("week"):
+        print(f"Generating week: {week} ...")
+        sections = []
+        lift_chart_data = []
+
+        # group by experiment within the week
+        for exp, exp_df in week_df.groupby("experiment_name"):
+            # safe filenames
+            safe_exp = exp.replace("/", "_").replace(" ", "_")
+            lift_path = os.path.join("charts", f"{week}__{safe_exp}__lift.png")
+            score_path = os.path.join("charts", f"{week}__{safe_exp}__score.png")
+
+            auroc, lift_pairs, lift_path = create_lift_chart(exp_df, exp, lift_path)
+            create_score_distribution_chart(exp_df, exp, score_path)
+
+            # collect lift chart data for audit
+            lift_chart_data.append({
+                "experiment_name": exp,
+                "auroc": round(float(auroc) if not np.isnan(auroc) else 0.0, 4),
+                "lift_chart": lift_pairs
+            })
+
+            # prepare section for PDF
+            details = [
+                f"AUROC: {round(float(auroc) if not np.isnan(auroc) else 0.0, 4)}",
+                f"Train size: {len(exp_df)}",
+                f"Success rate: {exp_df['actual_success'].mean() * 100:.2f}%"
+            ]
+            sections.append({
+                "model_name": exp,
+                "details": details,
+                "lift_chart": lift_path,
+                "score_dist": score_path
+            })
+
+        # build report_data structure that your create_gbm_report expects
+        report_data = {
+            "title": f"Referral GBM Models Report - Week {week}",
+            "document_title": f"Referral GBM Models Report - Week {week}",
+            "author": "Data Science Team",
+            "model_dates": f"Week: {week}",
+            "overview": f"This report summarizes GBM model performance and distributions for week {week}.",
+            "sections": sections
+        }
+
+        pdf_path = os.path.join("reports", f"Referral_GBM_Report_Week_{week}.pdf")
+        # CALL your create_gbm_report exactly: (output_path, report_data)
+        create_gbm_report(pdf_path, report_data)
+
+        # encode pdf
+        with open(pdf_path, "rb") as f:
+            pdf_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+        audit_rows.append({
+            "week": week,
+            "lift_chart_data": json.dumps(lift_chart_data),
+            "pdf_binary": pdf_b64
+        })
+
+    audit_df = pd.DataFrame(audit_rows)
+    audit_csv = os.path.join("reports", "audit_table.csv")
+    audit_df.to_csv(audit_csv, index=False)
+    print(f"✅ Done. Reports in ./reports, charts in ./charts, audit CSV: {audit_csv}")
+
+# ---------------- main ----------------
 if __name__ == "__main__":
-    report_data = {
-        "title": "fgs asgsfh saghsrthgtrygh",
-        "author": "sfgsg",
-        "document_title": "sgfsgh trstryghsrth", 
-        "model_dates": "Mosghtghjyh sth srthshtsrhsth", 
-        "sections": [
-            {
-                "model_name": "shtshstrh strgyhs strhst srthgstrh",
-                "details": [
-                    "Tsgfhg cesssghsh rate: 0.sghtsfh.",
-                    "shshhration for new shfgshh."
-                ],
-                "lift_chart": "english_lift.png",
-                "score_dist": "english_score.png"
-            },
-            {
-                "model_name": "sghsfgh tsh stghshs ",
-                "details": [
-                    "sghfs sg sghfg stgh .",
-                    "sghs sgh strghsrtghsrhtsh."
-                ],
-                "lift_chart": "english_lift.png",
-                "score_dist": "english_score.png"
-            }
-        ]
-    }
-
-    create_gbm_report("adfgafg.pdf", report_data)
+    generate_weekly_reports_and_audit()
