@@ -1,228 +1,339 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Page Title</title>
-  </head>
-<body>  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Responsive Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f8f9fb;
+      color: #333;
+    }
 
-  <!-- https://towardsdatascience.com/step-by-step-guide-for-building-interactive-calendars-in-plotly-277053f6ee7c/ -->
+    header {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      background: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 12px 0;
+    }
 
-<div class="calendar">
-  <div class="timeline">
-    <div class="spacer"></div>
-    <div class="time-marker">9 AM</div>
-    <div class="time-marker">10 AM</div>
-    <div class="time-marker">11 AM</div>
-    <div class="time-marker">12 PM</div>
-    <div class="time-marker">1 PM</div>
-    <div class="time-marker">2 PM</div>
-    <div class="time-marker">3 PM</div>
-    <div class="time-marker">4 PM</div>
-    <div class="time-marker">5 PM</div>
-    <div class="time-marker">6 PM</div>
-  </div>
-  <div class="days">
-    <div class="day mon">
-      <div class="date">
-        <p class="date-num">9</p>
-        <p class="date-day">Mon</p>
-      </div>
-      <div class="events">
-        <div class="event start-2 end-5 securities">
-          <p class="title">Securities Regulation</p>
-          <p class="time">2 PM - 5 PM</p>
-        </div>
-      </div>
-    </div>
-    <div class="day tues">
-      <div class="date">
-        <p class="date-num">12</p>
-        <p class="date-day">Tues</p>
-      </div>
-      <div class="events">
-        <div class="event start-10 end-12 corp-fi">
-          <p class="title">Corporate Finance</p>
-          <p class="time">10 AM - 12 PM</p>
-        </div>
-        <div class="event start-1 end-4 ent-law">
-          <p class="title">Entertainment Law</p>
-          <p class="time">1PM - 4PM</p>
-        </div>
-      </div>
-    </div>
-    <div class="day wed">
-      <div class="date">
-        <p class="date-num">11</p>
-        <p class="date-day">Wed</p>
-      </div>
-      <div class="events">
-        <div class="event start-12 end-1 writing">
-          <p class="title">Writing Seminar</p>
-          <p class="time">11 AM - 12 PM</p>
-        </div>
-        <div class="event start-2 end-5 securities">
-          <p class="title">Securities Regulation</p>
-          <p class="time">2 PM - 5 PM</p>
-        </div>
-      </div>
-    </div>
-    <div class="day thurs">
-      <div class="date">
-        <p class="date-num">12</p>
-        <p class="date-day">Thurs</p>
-      </div>
-      <div class="events">
-        <div class="event start-10 end-12 corp-fi">
-          <p class="title">Corporate Finance</p>
-          <p class="time">10 AM - 12 PM</p>
-        </div>
-        <div class="event start-1 end-4 ent-law">
-          <p class="title">Entertainment Law</p>
-          <p class="time">1PM - 4PM</p>
-        </div>
-      </div>
-    </div>
-    <div class="day fri">
-      <div class="date">
-        <p class="date-num">13</p>
-        <p class="date-day">Fri</p>
-      </div>
-      <div class="events">
-      </div>
-    </div>
-  </div>
-</div>
+    header button {
+      border: none;
+      background: #e9ecef;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
 
-<style>
+    header button.active {
+      background: #007bff;
+      color: white;
+    }
 
-  :root {
-    --numDays: 5;
-    --numHours: 10;
-    --timeHeight: 60px;
-    --calBgColor: #fff1f8;
-    --eventBorderColor: #f2d3d8;
-    --eventColor1: #ffd6d1;
-    --eventColor2: #fafaa3;
-    --eventColor3: #e2f8ff;
-    --eventColor4: #d1ffe6;
-  }
-  
-  .calendar {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: auto 1fr;
-    margin: 2rem;
-  }
-  
-  .timeline {
-    display: grid;
-    grid-template-rows: repeat(var(--numHours), var(--timeHeight));
-  }
-  
-  .days {
-    display: grid;
-    grid-column: 2;
-    gap: 5px;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  }
-  
-  .events {
-    display: grid;
-    grid-template-rows: repeat(var(--numHours), var(--timeHeight));
-    border-radius: 5px;
-    background: var(--calBgColor);
-  }
-  
-  .start-10 {
-    grid-row-start: 2;
-  }
-  
-  .start-12 {
-    grid-row-start: 4;
-  }
-  
-  .start-1 {
-    grid-row-start: 5;
-  }
-  
-  .start-2 {
-    grid-row-start: 6;
-  }
-  
-  .end-12 {
-    grid-row-end: 4;
-  }
-  
-  .end-1 {
-    grid-row-end: 5;
-  }
-  
-  .end-3 {
-    grid-row-end: 7;
-  }
-  
-  .end-4 {
-    grid-row-end: 8;
-  }
-  
-  .end-5 {
-    grid-row-end: 9;
-  }
-  
-  
-  .title {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-  }
-  
-  .event {
-    border: 1px solid var(--eventBorderColor);
-    border-radius: 5px;
-    padding: 0.5rem;
-    margin: 0 0.5rem;
-    background: white;
-  }
-  
-  .space,
-  .date {
-    height: 60px
-  }
-  
-  
-  body {
-    font-family: system-ui, sans-serif;
-  }
-  
-  .corp-fi {
-    background: var(--eventColor1);
-  }
-  
-  .ent-law {
-    background: var(--eventColor2);
-  }
-  
-  .writing {
-    background: var(--eventColor3);
-  }
-  
-  .securities {
-    background: var(--eventColor4);
-  }
-  
-  .date {
-    display: flex;
-    gap: 1em;
-  }
-  
-  .date-num {
-    font-size: 3rem;
-    font-weight: 600;
-    display: inline;
-  }
-  
-  .date-day {
-    display: inline;
-    font-size: 3rem;
-    font-weight: 100;
-  }
+    header button:hover:not(.active) {
+      background: #dee2e6;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      grid-auto-rows: auto;
+      gap: 20px;
+      padding: 30px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+
+    .tracker {
+      grid-column: 1 / -1;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .selectors {
+      display: flex;
+      gap: 10px;
+    }
+
+    select {
+      background: #f1f3f5;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    /* --- Daily Activities --- */
+    .calendar-wrapper {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      overflow-x: auto;
+    }
+
+    .day-labels {
+      display: grid;
+      grid-template-rows: repeat(7, 14px);
+      row-gap: 4px;
+      font-size: 10px;
+      color: #777;
+      padding-top: 10px;
+      text-align: right;
+      width: 24px;
+      flex-shrink: 0;
+    }
+
+    .month-labels {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 14px;
+      font-size: 10px;
+      color: #777;
+      margin-left: 32px;
+      margin-bottom: 4px;
+      white-space: nowrap;
+    }
+
+    .activities {
+      display: grid;
+      grid-template-rows: repeat(7, 14px);
+      grid-auto-flow: column;
+      grid-auto-columns: 14px;
+      gap: 4px;
+      padding: 10px 0;
+    }
+
+    .day {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      background-color: #ebedf0;
+      position: relative;
+    }
+
+    /* Color Levels */
+    .sleep .level-1 { background-color: #b3e5fc; }
+    .sleep .level-2 { background-color: #4fc3f7; }
+    .sleep .level-3 { background-color: #0288d1; }
+    .sleep .level-4 { background-color: #01579b; }
+
+    .exercise .level-1 { background-color: #a5d6a7; }
+    .exercise .level-2 { background-color: #66bb6a; }
+    .exercise .level-3 { background-color: #388e3c; }
+    .exercise .level-4 { background-color: #1b5e20; }
+
+    .nutrition .level-1 { background-color: #ffe082; }
+    .nutrition .level-2 { background-color: #ffca28; }
+    .nutrition .level-3 { background-color: #ffb300; }
+    .nutrition .level-4 { background-color: #ff6f00; }
+
+    .legend {
+      font-size: 0.75rem;
+      color: #777;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      background-color: #ebedf0;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-size: 11px;
+      padding: 5px 8px;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 10;
+      white-space: nowrap;
+    }
   </style>
-</body> 
+</head>
+<body>
+  <header>
+    <button class="active">Business Manager</button>
+    <button>Data Scientist</button>
+    <button>Operation Specialist</button>
+  </header>
+
+  <div class="container">
+    <div class="panel tracker">
+      <h2>Live Tracker</h2>
+      <p>OE In Progress (91.13% completed)</p>
+      <p>Start: 2025-10-13 23:11 ET</p>
+      <p>Estimated Finish: 2025-10-14 07:24 ET</p>
+    </div>
+
+    <div class="panel">
+      <h2>7-Day Gauge</h2>
+      <p><strong>92</strong> – Overall MS-PU Gauge</p>
+      <p>Business Objective: 95%</p>
+      <p>Model Predictability: 65%</p>
+      <p>Operational Health: 70%</p>
+    </div>
+
+    <div class="panel">
+      <h2>
+        Daily Activities
+        <div class="selectors">
+          <select id="activitySelector">
+            <option value="sleep" selected>Sleep Quality</option>
+            <option value="exercise">Exercise Quality</option>
+            <option value="nutrition">Nutrition Quality</option>
+          </select>
+          <select id="yearSelector">
+            <option value="2025" selected>2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+          </select>
+        </div>
+      </h2>
+
+      <div class="month-labels" id="monthLabels"></div>
+
+      <div class="calendar-wrapper">
+        <div class="day-labels">
+          <div>Mon</div>
+          <div></div>
+          <div>Wed</div>
+          <div></div>
+          <div>Fri</div>
+          <div></div>
+          <div>Sun</div>
+        </div>
+        <div class="activities" id="calendar"></div>
+      </div>
+
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+
+  <div id="tooltip" class="tooltip"></div>
+
+  <script>
+    const calendar = document.getElementById('calendar');
+    const monthLabels = document.getElementById('monthLabels');
+    const legend = document.getElementById('legend');
+    const tooltip = document.getElementById('tooltip');
+    const activitySelector = document.getElementById('activitySelector');
+    const yearSelector = document.getElementById('yearSelector');
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+    function generateCalendar(year, activityType) {
+      calendar.innerHTML = '';
+      calendar.className = `activities ${activityType}`;
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year, 11, 31);
+      const startDay = (startDate.getDay() + 6) % 7; // Monday start
+
+      // Fill offset before Jan 1
+      for (let i = 0; i < startDay; i++) {
+        const empty = document.createElement('div');
+        calendar.appendChild(empty);
+      }
+
+      const days = [];
+      let current = new Date(startDate);
+      while (current <= endDate) {
+        days.push(new Date(current));
+        current.setDate(current.getDate() + 1);
+      }
+
+      days.forEach(date => {
+        const day = document.createElement('div');
+        day.classList.add('day');
+        const level = Math.floor(Math.random() * 5);
+        if (level > 0) day.classList.add(`level-${level}`);
+        const value = level * 10 + Math.floor(Math.random() * 10);
+        day.dataset.date = date.toDateString();
+        day.dataset.activity = activitySelector.options[activitySelector.selectedIndex].text;
+        day.dataset.value = value;
+        day.addEventListener('mouseenter', () => {
+          tooltip.style.opacity = 1;
+          tooltip.textContent = `${day.dataset.date} — ${day.dataset.activity}: ${day.dataset.value}`;
+        });
+        day.addEventListener('mousemove', e => {
+          tooltip.style.left = e.pageX + 10 + 'px';
+          tooltip.style.top = e.pageY + 10 + 'px';
+        });
+        day.addEventListener('mouseleave', () => {
+          tooltip.style.opacity = 0;
+        });
+        calendar.appendChild(day);
+      });
+
+      generateMonthLabels(year, startDay, days.length);
+      generateLegend(activityType);
+    }
+
+    function generateMonthLabels(year, startOffset, totalDays) {
+      monthLabels.innerHTML = '';
+      months.forEach((m, i) => {
+        const firstOfMonth = new Date(year, i, 1);
+        const dayOfYear = Math.floor((firstOfMonth - new Date(year, 0, 1)) / (1000 * 60 * 60 * 24));
+        const colIndex = Math.floor((dayOfYear + startOffset) / 7);
+        const label = document.createElement('div');
+        label.textContent = m;
+        label.style.gridColumnStart = colIndex + 1;
+        monthLabels.appendChild(label);
+      });
+    }
+
+    function generateLegend(activityType) {
+      legend.innerHTML = '';
+      const textLess = document.createElement('span');
+      textLess.textContent = 'Less';
+      legend.appendChild(textLess);
+
+      for (let i = 0; i < 5; i++) {
+        const box = document.createElement('div');
+        box.classList.add('legend-box');
+        if (i > 0) box.classList.add(`level-${i}`);
+        box.classList.add(activityType);
+        legend.appendChild(box);
+      }
+
+      const textMore = document.createElement('span');
+      textMore.textContent = 'More';
+      legend.appendChild(textMore);
+    }
+
+    activitySelector.addEventListener('change', () => generateCalendar(yearSelector.value, activitySelector.value));
+    yearSelector.addEventListener('change', () => generateCalendar(yearSelector.value, activitySelector.value));
+
+    generateCalendar(2025, "sleep");
+  </script>
+</body>
+</html>

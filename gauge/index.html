@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sleep Fitness Gauge</title>
+<title>Fitness Gauge</title>
 <style>
   body {
     margin: 0;
@@ -17,64 +17,65 @@
     height: 100vh;
   }
 
-  /* Weekday bar */
   .week {
     display: flex;
-    gap: 16px;
+    gap: 14px;
     margin-bottom: 22px;
   }
 
   .day {
     width: 32px;
+    height: 48px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
     cursor: pointer;
     font-weight: bold;
     color: #a0a3a8;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 4px;
+  }
+
+  .dot.green {
+    background: #00ff88;
+  }
+
+  .dot.red {
+    background: #ff4d4d;
   }
 
   .day.active {
     color: #00aaff;
   }
 
-  /* Status dot below each day */
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-top: 6px;
-  }
-
-  .dot.green { background: #00ff80; }
-  .dot.red { background: #ff4c4c; }
-
-  /* Card */
   .card {
     background: #141824;
-    border-radius: 18px;
+    border-radius: 16px;
     padding: 25px;
-    width: 330px;
+    width: 320px;
     text-align: center;
-    box-shadow: 0 0 25px rgba(0,0,0,0.5);
   }
 
-  /* Gauge container */
   .gauge {
-    position: relative;
     width: 220px;
     height: 110px;
-    margin: 0 auto 10px auto;
-    transform: rotate(180deg); /* flipped upward */
+    position: relative;
+    margin: 0 auto;
+    transform: rotate(180deg);
   }
 
-  /* Ticks */
   .tick {
     position: absolute;
     top: 100%;
     left: 50%;
     width: 2px;
-    height: 12px;
+    height: 14px;
     background: #444;
     transform-origin: center -100px;
     border-radius: 1px;
@@ -84,162 +85,142 @@
     background: #00aaff;
   }
 
-  /* Score and labels */
   .score {
     font-size: 72px;
     font-weight: bold;
-    margin-top: -15px;
+    margin-top: -20px;
   }
 
-  .status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 14px;
-    margin-bottom: 8px;
+  .divider {
+    position: relative;
+    margin: 10px 0 6px;
+    text-align: center;
   }
 
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+  .divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #444;
+    z-index: 0;
   }
 
-  .title {
+  .divider span {
+    position: relative;
+    z-index: 1;
+    background: #141824;
+    padding: 0 10px;
     color: #aaa;
-    font-size: 13px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
   }
 
   .date {
-    color: #777;
     font-size: 13px;
-    margin-bottom: 22px;
+    color: #888;
+    margin-bottom: 6px;
   }
 
-  .details {
+  .info {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     font-size: 14px;
     color: #aaa;
-    margin-top: 15px;
+    margin-top: 10px;
   }
 
-  .details span {
-    display: block;
-    color: #fff;
-    font-weight: bold;
-    margin-top: 4px;
+  .label {
+    text-align: left;
+  }
+
+  .value {
+    text-align: right;
+    color: #00aaff;
   }
 </style>
 </head>
 <body>
 
-  <div class="week" id="week">
-    <div class="day"><div>M</div><div class="dot"></div></div>
-    <div class="day"><div>T</div><div class="dot"></div></div>
-    <div class="day"><div>W</div><div class="dot"></div></div>
-    <div class="day"><div>T</div><div class="dot"></div></div>
-    <div class="day"><div>F</div><div class="dot"></div></div>
-    <div class="day"><div>S</div><div class="dot"></div></div>
-    <div class="day active"><div>S</div><div class="dot"></div></div>
+<div class="week" id="week">
+  <div class="day"><div>M</div><div class="dot green"></div></div>
+  <div class="day"><div>T</div><div class="dot green"></div></div>
+  <div class="day"><div>W</div><div class="dot red"></div></div>
+  <div class="day"><div>T</div><div class="dot green"></div></div>
+  <div class="day"><div>F</div><div class="dot red"></div></div>
+  <div class="day"><div>S</div><div class="dot green"></div></div>
+  <div class="day active"><div>S</div><div class="dot green"></div></div>
+</div>
+
+<div class="card">
+  <div class="divider"><span>Sleep Fitness Score</span></div>
+  <div class="date" id="date">Sunday, Oct 12</div>
+
+  <div class="gauge" id="gauge"></div>
+  <div class="score" id="score">81</div>
+
+  <div class="info">
+    <div class="label">Quality</div>
+    <div class="value" id="quality">83</div>
   </div>
-
-  <div class="card">
-    <div class="gauge" id="gauge"></div>
-    <div class="score" id="score">81</div>
-    <div class="status">
-      <div class="status-dot" id="statusDot" style="background:#00ff80;"></div>
-      <div id="statusText">In range</div>
-    </div>
-    <div class="title">Sleep Fitness Score</div>
-    <div class="date" id="dateText">Sunday, Oct 12</div>
-    <div class="details">
-      <div>Quality<span id="quality">70%</span></div>
-      <div>Consistency<span id="consistency">78%</span></div>
-      <div>Time Slept<span id="time">7h 32m</span></div>
-    </div>
+  <div class="info">
+    <div class="label">Consistency</div>
+    <div class="value" id="consistency">79</div>
   </div>
+</div>
 
-  <script>
-    const week = document.querySelectorAll(".day");
-    const dots = document.querySelectorAll(".dot");
-    const scoreEl = document.getElementById("score");
-    const qualityEl = document.getElementById("quality");
-    const consistencyEl = document.getElementById("consistency");
-    const timeEl = document.getElementById("time");
-    const statusDot = document.getElementById("statusDot");
-    const statusText = document.getElementById("statusText");
-    const gaugeEl = document.getElementById("gauge");
-    const dateText = document.getElementById("dateText");
+<script>
+  const week = document.querySelectorAll(".day");
+  const scoreEl = document.getElementById("score");
+  const qualityEl = document.getElementById("quality");
+  const consistencyEl = document.getElementById("consistency");
+  const dateEl = document.getElementById("date");
+  const gaugeEl = document.getElementById("gauge");
 
-    const data = [
-      { day: "Monday", date: "Oct 6", score: 72, quality: "65%", consistency: "70%", time: "6h 45m"},
-      { day: "Tuesday", date: "Oct 7", score: 78, quality: "72%", consistency: "76%", time: "7h 10m"},
-      { day: "Wednesday", date: "Oct 8", score: 85, quality: "80%", consistency: "83%", time: "7h 55m"},
-      { day: "Thursday", date: "Oct 9", score: 90, quality: "85%", consistency: "88%", time: "8h 15m"},
-      { day: "Friday", date: "Oct 10", score: 88, quality: "82%", consistency: "86%", time: "8h 00m"},
-      { day: "Saturday", date: "Oct 11", score: 70, quality: "60%", consistency: "68%", time: "6h 20m"},
-      { day: "Sunday", date: "Oct 12", score: 81, quality: "70%", consistency: "78%", time: "7h 32m"},
-    ];
+  const data = [
+    { score: 72, quality: 75, consistency: 68, date: "Monday, Oct 6" },
+    { score: 78, quality: 80, consistency: 73, date: "Tuesday, Oct 7" },
+    { score: 85, quality: 88, consistency: 80, date: "Wednesday, Oct 8" },
+    { score: 90, quality: 92, consistency: 85, date: "Thursday, Oct 9" },
+    { score: 88, quality: 86, consistency: 83, date: "Friday, Oct 10" },
+    { score: 70, quality: 72, consistency: 69, date: "Saturday, Oct 11" },
+    { score: 81, quality: 83, consistency: 79, date: "Sunday, Oct 12" },
+  ];
 
-    const totalTicks = 60;
-    for (let i = 0; i < totalTicks; i++) {
-      const tick = document.createElement("div");
-      tick.classList.add("tick");
-      const angle = -90 + (i * 180) / (totalTicks - 1);
-      tick.style.transform = `rotate(${angle}deg) translateX(-50%)`;
-      gaugeEl.appendChild(tick);
-    }
+  // Create ticks
+  const totalTicks = 60;
+  for (let i = 0; i < totalTicks; i++) {
+    const tick = document.createElement("div");
+    tick.classList.add("tick");
+    const angle = -90 + (i * 180) / (totalTicks - 1);
+    tick.style.transform = `rotate(${angle}deg) translateX(-50%)`;
+    gaugeEl.appendChild(tick);
+  }
+  const ticks = document.querySelectorAll(".tick");
 
-    const ticks = document.querySelectorAll(".tick");
-
-    function updateGauge(score) {
-      const activeCount = Math.round((score / 100) * totalTicks);
-      ticks.forEach((tick, i) => tick.classList.toggle("active", i < activeCount));
-    }
-
-    function updateStatus(score) {
-      if (score >= 75 && score <= 90) {
-        statusDot.style.background = "#00ff80";
-        statusText.textContent = "In range";
-      } else {
-        statusDot.style.background = "#ff4c4c";
-        statusText.textContent = "Out of range";
-      }
-    }
-
-    // Set dots once
-    data.forEach((entry, i) => {
-      if (entry.score >= 75 && entry.score <= 90) {
-        dots[i].classList.add("green");
-      } else {
-        dots[i].classList.add("red");
-      }
+  function updateGauge(score) {
+    const activeCount = Math.round((score / 100) * totalTicks);
+    ticks.forEach((tick, i) => {
+      tick.classList.toggle("active", i < activeCount);
     });
+  }
 
-    // Initialize
-    updateGauge(81);
+  updateGauge(81);
 
-    week.forEach((day, index) => {
-      day.addEventListener("click", () => {
-        document.querySelector(".day.active").classList.remove("active");
-        day.classList.add("active");
-
-        const entry = data[index];
-        scoreEl.textContent = entry.score;
-        qualityEl.textContent = entry.quality;
-        consistencyEl.textContent = entry.consistency;
-        timeEl.textContent = entry.time;
-        dateText.textContent = `${entry.day}, ${entry.date}`;
-        updateGauge(entry.score);
-        updateStatus(entry.score);
-      });
+  week.forEach((day, i) => {
+    day.addEventListener("click", () => {
+      document.querySelector(".day.active").classList.remove("active");
+      day.classList.add("active");
+      const d = data[i];
+      scoreEl.textContent = d.score;
+      qualityEl.textContent = d.quality;
+      consistencyEl.textContent = d.consistency;
+      dateEl.textContent = d.date;
+      updateGauge(d.score);
     });
-  </script>
+  });
+</script>
 
 </body>
 </html>
