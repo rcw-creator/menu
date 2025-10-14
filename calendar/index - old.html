@@ -1,228 +1,208 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Page Title</title>
-  </head>
-<body>  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Activities Heatmap</title>
+  <style>
+    body {
+      font-family: "Inter", sans-serif;
+      background: #f5f6f8;
+      margin: 0;
+      padding: 2rem;
+    }
 
-  <!-- https://towardsdatascience.com/step-by-step-guide-for-building-interactive-calendars-in-plotly-277053f6ee7c/ -->
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      padding: 20px 28px;
+      max-width: 1100px;
+      margin: auto;
+    }
 
-<div class="calendar">
-  <div class="timeline">
-    <div class="spacer"></div>
-    <div class="time-marker">9 AM</div>
-    <div class="time-marker">10 AM</div>
-    <div class="time-marker">11 AM</div>
-    <div class="time-marker">12 PM</div>
-    <div class="time-marker">1 PM</div>
-    <div class="time-marker">2 PM</div>
-    <div class="time-marker">3 PM</div>
-    <div class="time-marker">4 PM</div>
-    <div class="time-marker">5 PM</div>
-    <div class="time-marker">6 PM</div>
-  </div>
-  <div class="days">
-    <div class="day mon">
-      <div class="date">
-        <p class="date-num">9</p>
-        <p class="date-day">Mon</p>
-      </div>
-      <div class="events">
-        <div class="event start-2 end-5 securities">
-          <p class="title">Securities Regulation</p>
-          <p class="time">2 PM - 5 PM</p>
-        </div>
-      </div>
-    </div>
-    <div class="day tues">
-      <div class="date">
-        <p class="date-num">12</p>
-        <p class="date-day">Tues</p>
-      </div>
-      <div class="events">
-        <div class="event start-10 end-12 corp-fi">
-          <p class="title">Corporate Finance</p>
-          <p class="time">10 AM - 12 PM</p>
-        </div>
-        <div class="event start-1 end-4 ent-law">
-          <p class="title">Entertainment Law</p>
-          <p class="time">1PM - 4PM</p>
-        </div>
-      </div>
-    </div>
-    <div class="day wed">
-      <div class="date">
-        <p class="date-num">11</p>
-        <p class="date-day">Wed</p>
-      </div>
-      <div class="events">
-        <div class="event start-12 end-1 writing">
-          <p class="title">Writing Seminar</p>
-          <p class="time">11 AM - 12 PM</p>
-        </div>
-        <div class="event start-2 end-5 securities">
-          <p class="title">Securities Regulation</p>
-          <p class="time">2 PM - 5 PM</p>
-        </div>
-      </div>
-    </div>
-    <div class="day thurs">
-      <div class="date">
-        <p class="date-num">12</p>
-        <p class="date-day">Thurs</p>
-      </div>
-      <div class="events">
-        <div class="event start-10 end-12 corp-fi">
-          <p class="title">Corporate Finance</p>
-          <p class="time">10 AM - 12 PM</p>
-        </div>
-        <div class="event start-1 end-4 ent-law">
-          <p class="title">Entertainment Law</p>
-          <p class="time">1PM - 4PM</p>
-        </div>
-      </div>
-    </div>
-    <div class="day fri">
-      <div class="date">
-        <p class="date-num">13</p>
-        <p class="date-day">Fri</p>
-      </div>
-      <div class="events">
-      </div>
-    </div>
-  </div>
-</div>
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
 
-<style>
+    .header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
 
-  :root {
-    --numDays: 5;
-    --numHours: 10;
-    --timeHeight: 60px;
-    --calBgColor: #fff1f8;
-    --eventBorderColor: #f2d3d8;
-    --eventColor1: #ffd6d1;
-    --eventColor2: #fafaa3;
-    --eventColor3: #e2f8ff;
-    --eventColor4: #d1ffe6;
-  }
-  
-  .calendar {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: auto 1fr;
-    margin: 2rem;
-  }
-  
-  .timeline {
-    display: grid;
-    grid-template-rows: repeat(var(--numHours), var(--timeHeight));
-  }
-  
-  .days {
-    display: grid;
-    grid-column: 2;
-    gap: 5px;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  }
-  
-  .events {
-    display: grid;
-    grid-template-rows: repeat(var(--numHours), var(--timeHeight));
-    border-radius: 5px;
-    background: var(--calBgColor);
-  }
-  
-  .start-10 {
-    grid-row-start: 2;
-  }
-  
-  .start-12 {
-    grid-row-start: 4;
-  }
-  
-  .start-1 {
-    grid-row-start: 5;
-  }
-  
-  .start-2 {
-    grid-row-start: 6;
-  }
-  
-  .end-12 {
-    grid-row-end: 4;
-  }
-  
-  .end-1 {
-    grid-row-end: 5;
-  }
-  
-  .end-3 {
-    grid-row-end: 7;
-  }
-  
-  .end-4 {
-    grid-row-end: 8;
-  }
-  
-  .end-5 {
-    grid-row-end: 9;
-  }
-  
-  
-  .title {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-  }
-  
-  .event {
-    border: 1px solid var(--eventBorderColor);
-    border-radius: 5px;
-    padding: 0.5rem;
-    margin: 0 0.5rem;
-    background: white;
-  }
-  
-  .space,
-  .date {
-    height: 60px
-  }
-  
-  
-  body {
-    font-family: system-ui, sans-serif;
-  }
-  
-  .corp-fi {
-    background: var(--eventColor1);
-  }
-  
-  .ent-law {
-    background: var(--eventColor2);
-  }
-  
-  .writing {
-    background: var(--eventColor3);
-  }
-  
-  .securities {
-    background: var(--eventColor4);
-  }
-  
-  .date {
-    display: flex;
-    gap: 1em;
-  }
-  
-  .date-num {
-    font-size: 3rem;
-    font-weight: 600;
-    display: inline;
-  }
-  
-  .date-day {
-    display: inline;
-    font-size: 3rem;
-    font-weight: 100;
-  }
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+    }
+
+    .heatmap-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .heatmap-half {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .month-labels {
+      display: grid;
+      grid-template-columns: repeat(26, 1fr);
+      font-size: 0.8rem;
+      color: #555;
+      margin-bottom: 4px;
+      position: relative;
+    }
+
+    .month-labels span {
+      text-align: center;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 2px;
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(26, 1fr);
+      grid-auto-rows: 14px;
+      gap: 3px;
+    }
+
+    .day-label {
+      font-size: 0.7rem;
+      color: #666;
+      text-align: right;
+      margin-right: 6px;
+      width: 20px;
+    }
+
+    .week-row {
+      display: flex;
+      align-items: center;
+    }
+
+    .square {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      background-color: #eaeaea;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 10px;
+      gap: 6px;
+    }
+
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+    }
+
+    .legend .scale {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .heatmap-grid,
+      .month-labels {
+        grid-template-columns: repeat(13, 1fr);
+      }
+      .heatmap-container {
+        gap: 12px;
+      }
+    }
   </style>
-</body> 
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <h2>Daily Activities</h2>
+      <div class="controls">
+        <select>
+          <option>Sleep Quality</option>
+          <option>Exercise</option>
+          <option>Focus Time</option>
+        </select>
+        <select>
+          <option>2024</option>
+          <option>2023</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="heatmap-container">
+      <!-- Top Half (Jul–Dec) -->
+      <div class="heatmap-half">
+        <div class="month-labels">
+          <span>Jul</span><span></span><span></span><span>Aug</span><span></span><span></span><span>Sep</span><span></span><span></span><span>Oct</span><span></span><span></span><span>Nov</span><span></span><span></span><span>Dec</span>
+        </div>
+        <div class="heatmap-grid" id="heatmap-top"></div>
+      </div>
+
+      <!-- Bottom Half (Jan–Jun) -->
+      <div class="heatmap-half">
+        <div class="month-labels">
+          <span>Jan</span><span></span><span></span><span>Feb</span><span></span><span></span><span>Mar</span><span></span><span></span><span>Apr</span><span></span><span></span><span>May</span><span></span><span></span><span>Jun</span>
+        </div>
+        <div class="heatmap-grid" id="heatmap-bottom"></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span>Less</span>
+      <div class="scale">
+        <div class="legend-color" style="background:#e0f0ff;"></div>
+        <div class="legend-color" style="background:#9fd1ff;"></div>
+        <div class="legend-color" style="background:#4fa8ff;"></div>
+        <div class="legend-color" style="background:#006edc;"></div>
+      </div>
+      <span>More</span>
+    </div>
+  </div>
+
+  <script>
+    function generateData() {
+      const data = [];
+      for (let i = 0; i < 26 * 7; i++) {
+        data.push(Math.floor(Math.random() * 4));
+      }
+      return data;
+    }
+
+    function renderHeatmap(containerId) {
+      const container = document.getElementById(containerId);
+      const data = generateData();
+      data.forEach(value => {
+        const div = document.createElement("div");
+        div.className = "square";
+        const colors = ["#e0f0ff", "#9fd1ff", "#4fa8ff", "#006edc"];
+        div.style.background = colors[value];
+        container.appendChild(div);
+      });
+    }
+
+    renderHeatmap("heatmap-top");
+    renderHeatmap("heatmap-bottom");
+  </script>
+</body>
+</html>
