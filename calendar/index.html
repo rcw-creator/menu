@@ -1,347 +1,282 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Responsive Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background-color: #f8f9fb;
-      color: #333;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Town Calendar</title>
+<style>
+  body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #b1d0e0, #f6f9fc);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
-    header {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      padding: 12px 0;
-    }
+  .calendar-card {
+    position: relative;
+    width: 320px;
+    padding: 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
 
-    header button {
-      border: none;
-      background: #e9ecef;
-      border-radius: 6px;
-      padding: 6px 14px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
+  .calendar-card h2 {
+    margin: 0;
+    color: #004a7c;
+    font-weight: 700;
+    text-align: center;
+  }
 
-    header button.active { background: #007bff; color: #fff; }
-    header button:hover:not(.active) { background: #dee2e6; }
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0077b6;
+    color: white;
+    border-radius: 8px;
+    margin: 10px 0;
+    padding: 6px 10px;
+    font-weight: bold;
+  }
 
-    .container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-      gap: 20px;
-      padding: 30px;
-    }
+  .month-nav button {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.2em;
+    cursor: pointer;
+    width: 24px;
+    text-align: center;
+    visibility: visible;
+  }
 
-    .panel {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
+  .month-nav button.hidden {
+    visibility: hidden; /* instead of display:none to preserve spacing */
+  }
 
-    .tracker { grid-column: 1 / -1; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 14px;
+  }
 
-    h2 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+  th {
+    color: #004a7c;
+    font-weight: 600;
+    padding-bottom: 6px;
+  }
 
-    .selectors { display: flex; gap: 10px; }
-    select {
-      background: #f1f3f5;
-      border: none;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
+  td {
+    position: relative;
+    padding: 6px;
+    border-radius: 6px;
+    color: #004a7c;
+    transition: background 0.2s;
+  }
 
-    .calendar-section {
-      margin-bottom: 12px;
-    }
+  .today {
+    background: rgba(255, 230, 150, 0.9);
+    border-radius: 8px;
+    font-weight: bold;
+  }
 
-    .calendar-wrapper {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      overflow-x: auto;
-    }
+  .has-event {
+    cursor: pointer;
+  }
 
-    .day-labels {
-      display: grid;
-      grid-template-rows: repeat(7, 14px);
-      row-gap: 4px;
-      font-size: 10px;
-      color: #777;
-      padding-top: 10px;
-      text-align: right;
-      width: 24px;
-      flex-shrink: 0;
-    }
+  .has-event:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
 
-    .month-labels {
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: 14px;
-      font-size: 10px;
-      color: #777;
-      margin-left: 32px;
-      margin-bottom: 4px;
-      gap: 4px;
-      white-space: nowrap;
-    }
+  .has-event::after {
+    content: "";
+    position: absolute;
+    bottom: 1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00cc88;
+    box-shadow: 0 0 5px #00cc88;
+  }
 
-    .activities {
-      display: grid;
-      grid-template-rows: repeat(7, 14px);
-      grid-auto-flow: column;
-      grid-auto-columns: 14px;
-      gap: 4px;
-      padding: 10px 0;
-    }
+  .event-panel {
+    position: fixed;
+    top: 0;
+    right: -350px;
+    width: 300px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(14px);
+    border-left: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.15);
+    transition: right 0.4s ease;
+    padding: 20px;
+    overflow-y: auto;
+  }
 
-    .day {
-      width: 14px;
-      height: 14px;
-      border-radius: 2px;
-      position: relative;
-    }
+  .event-panel.active {
+    right: 0;
+  }
 
-    .level-0 { background-color: #ebedf0; }
+  .event-panel h3 {
+    color: #004a7c;
+    margin-top: 0;
+  }
 
-    .sleep-level-1 { background-color: #b3e5fc; }
-    .sleep-level-2 { background-color: #4fc3f7; }
-    .sleep-level-3 { background-color: #0288d1; }
-    .sleep-level-4 { background-color: #01579b; }
+  .event {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+  }
 
-    .exercise-level-1 { background-color: #a5d6a7; }
-    .exercise-level-2 { background-color: #66bb6a; }
-    .exercise-level-3 { background-color: #388e3c; }
-    .exercise-level-4 { background-color: #1b5e20; }
-
-    .nutrition-level-1 { background-color: #ffe082; }
-    .nutrition-level-2 { background-color: #ffca28; }
-    .nutrition-level-3 { background-color: #ffb300; }
-    .nutrition-level-4 { background-color: #ff6f00; }
-
-    .legend {
-      font-size: 0.75rem;
-      color: #777;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 5px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-
-    .legend-box {
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-    }
-
-    .tooltip {
-      position: absolute;
-      background: rgba(0,0,0,0.8);
-      color: #fff;
-      font-size: 11px;
-      padding: 5px 8px;
-      border-radius: 4px;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.15s;
-      z-index: 10;
-      white-space: nowrap;
-    }
-
-    .divider {
-      border-top: 1px solid #ccc;
-      margin: 10px 0;
-    }
-  </style>
+  .event-title {
+    font-weight: bold;
+  }
+</style>
 </head>
 <body>
-  <header>
-    <button class="active">Business Manager</button>
-    <button>Data Scientist</button>
-    <button>Operation Specialist</button>
-  </header>
-
-  <div class="container">
-    <div class="panel tracker">
-      <h2>Live Tracker</h2>
-      <p>OE In Progress (91.13% completed)</p>
-      <p>Start: 2025-10-13 23:11 ET</p>
-      <p>Estimated Finish: 2025-10-14 07:24 ET</p>
+  <div class="calendar-card">
+    <h2>Town Calendar</h2>
+    <div class="month-nav">
+      <button id="prevMonth"><</button>
+      <span id="monthLabel">October 2025</span>
+      <button id="nextMonth">></button>
     </div>
 
-    <div class="panel">
-      <h2>7-Day Gauge</h2>
-      <p><strong>92</strong> – Overall MS-PU Gauge</p>
-      <p>Business Objective: 95%</p>
-      <p>Model Predictability: 65%</p>
-      <p>Operational Health: 70%</p>
-    </div>
-
-    <div class="panel" style="width: 1000px;">
-      <h2>
-        Daily Activities
-        <div class="selectors">
-          <select id="activitySelector">
-            <option value="sleep" selected>Sleep Quality</option>
-            <option value="exercise">Exercise Quality</option>
-            <option value="nutrition">Nutrition Quality</option>
-          </select>
-          <select id="yearSelector">
-            <option value="2025" selected>2025</option>
-            <option value="2024">2024</option>
-            <option value="2023">2023</option>
-          </select>
-        </div>
-      </h2>
-
-      <!-- TOP HALF (JUL–DEC) -->
-      <div class="calendar-section">
-        <div id="monthLabels2" class="month-labels"></div>
-        <div class="calendar-wrapper">
-          <div class="day-labels">
-            <div>Mon</div><div></div><div>Wed</div><div></div><div>Fri</div><div></div><div>Sun</div>
-          </div>
-          <div id="calendar2" class="activities"></div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <!-- BOTTOM HALF (JAN–JUN) -->
-      <div class="calendar-section">
-        <div id="monthLabels1" class="month-labels"></div>
-        <div class="calendar-wrapper">
-          <div class="day-labels">
-            <div>Mon</div><div></div><div>Wed</div><div></div><div>Fri</div><div></div><div>Sun</div>
-          </div>
-          <div id="calendar1" class="activities"></div>
-        </div>
-      </div>
-
-      <div id="legend" class="legend"></div>
-    </div>
+    <table>
+      <thead>
+        <tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr>
+      </thead>
+      <tbody id="calendarBody"></tbody>
+    </table>
   </div>
 
-  <div id="tooltip" class="tooltip"></div>
+  <div class="event-panel" id="eventPanel">
+    <h3 id="eventTitle">Events</h3>
+    <div id="eventList"></div>
+  </div>
 
-  <script>
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    const tooltip = document.getElementById("tooltip");
-    const legend = document.getElementById("legend");
-    const activitySelector = document.getElementById("activitySelector");
-    const yearSelector = document.getElementById("yearSelector");
+<script>
+  const events = { 
+    "2025-09-06": [{ title: "Library Story Hour", desc: "Kids storytelling and crafts at 3 PM." }],
+    "2025-09-17": [{ title: "Community Meeting", desc: "Discuss upcoming parade and safety rules." }],
+    "2025-10-06": [{ title: "Library Story Hour", desc: "Kids storytelling and crafts at 3 PM." }],
+    "2025-10-17": [{ title: "Community Meeting", desc: "Discuss upcoming parade and safety rules." }],
+    "2025-10-20": [{ title: "Town Council", desc: "Updates from the mayor, 7 PM at Hall." }],
+    "2025-10-23": [{ title: "Fall Festival", desc: "Food stalls, games, and live music!" }],
+    "2025-10-28": [{ title: "Halloween Parade", desc: "Family fun with costumes, 4 PM Main St." }],    
+    "2025-11-28": [{ title: "Thanksgiving Parade", desc: "Join us downtown for the parade!" }]
+  };
 
-    function generateCalendar(year, activityType) {
-      generateHalf(year, activityType, 0, 5, "calendar1", "monthLabels1"); // Jan–Jun
-      generateHalf(year, activityType, 6, 11, "calendar2", "monthLabels2"); // Jul–Dec
-      generateLegend(activityType);
-    }
+  const eventPanel = document.getElementById('eventPanel');
+  const eventList = document.getElementById('eventList');
+  const monthLabel = document.getElementById('monthLabel');
+  const calendarBody = document.getElementById('calendarBody');
+  const prevMonth = document.getElementById('prevMonth');
+  const nextMonth = document.getElementById('nextMonth');
 
-    function generateHalf(year, activityType, startMonth, endMonth, calendarId, labelId) {
-      const calendar = document.getElementById(calendarId);
-      const monthLabels = document.getElementById(labelId);
-      calendar.innerHTML = "";
-      monthLabels.innerHTML = "";
-      calendar.className = `activities ${activityType}`;
+  const eventMonths = [...new Set(Object.keys(events).map(d => d.slice(0, 7)))].sort();
+  let currentDate = new Date();
 
-      const startDate = new Date(year, startMonth, 1);
-      const endDate = new Date(year, endMonth + 1, 0);
-      const startOffset = (startDate.getDay() + 6) % 7;
+  function updateNavButtons() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const currentKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const currentIndex = eventMonths.indexOf(currentKey);
 
-      for (let i = 0; i < startOffset; i++) calendar.appendChild(document.createElement("div"));
+    prevMonth.classList.toggle("hidden", currentIndex <= 0);
+    nextMonth.classList.toggle("hidden", currentIndex >= eventMonths.length - 1);
+  }
 
-      const days = [];
-      let current = new Date(startDate);
-      while (current <= endDate) {
-        days.push(new Date(current));
-        current.setDate(current.getDate() + 1);
+  function renderCalendar(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const today = new Date();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDay = firstDay.getDay();
+    const totalDays = lastDay.getDate();
+
+    monthLabel.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+    calendarBody.innerHTML = "";
+
+    let row = document.createElement("tr");
+    for (let i = 0; i < startDay; i++) row.appendChild(document.createElement("td"));
+
+    for (let d = 1; d <= totalDays; d++) {
+      const cell = document.createElement("td");
+      cell.textContent = d;
+      const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+      if (events[fullDate]) cell.classList.add("has-event");
+      if (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+        cell.classList.add("today");
       }
 
-      days.forEach(date => {
-        const day = document.createElement("div");
-        day.classList.add("day");
-        const level = Math.floor(Math.random() * 5);
-        day.classList.add(level ? `${activityType}-level-${level}` : "level-0");
-        const value = level * 10 + Math.floor(Math.random() * 10);
-        day.dataset.date = date.toDateString();
-        day.dataset.activity = activitySelector.options[activitySelector.selectedIndex].text;
-        day.dataset.value = value;
-
-        day.addEventListener("mouseenter", () => {
-          tooltip.style.opacity = 1;
-          tooltip.textContent = `${day.dataset.date} — ${day.dataset.activity}: ${day.dataset.value}`;
-        });
-        day.addEventListener("mousemove", e => {
-          tooltip.style.left = e.pageX + 10 + "px";
-          tooltip.style.top = e.pageY + 10 + "px";
-        });
-        day.addEventListener("mouseleave", () => tooltip.style.opacity = 0);
-
-        calendar.appendChild(day);
+      cell.addEventListener("mouseenter", () => {
+        if (events[fullDate]) {
+          eventPanel.classList.add("active");
+          eventList.innerHTML = events[fullDate]
+            .map(e => `<div class="event"><div class="event-title">${e.title}</div><div>${e.desc}</div></div>`)
+            .join('');
+          document.getElementById('eventTitle').innerText = `${monthLabel.textContent.split(' ')[0]} ${d} Events`;
+        } else {
+          eventPanel.classList.remove("active");
+        }
       });
 
-      // Month labels
-      const firstDayOfHalf = new Date(year, startMonth, 1);
-      const totalDays = days.length;
-      const totalWeeks = Math.ceil((totalDays + startOffset) / 7);
-
-      for (let i = startMonth; i <= endMonth; i++) {
-        const month = months[i];
-        const firstOfMonth = new Date(year, i, 1);
-        const daysSinceStart = Math.floor((firstOfMonth - firstDayOfHalf) / 86400000);
-        const colIndex = Math.floor((daysSinceStart + startOffset) / 7);
-        if (colIndex < totalWeeks) {
-          const label = document.createElement("div");
-          label.textContent = month;
-          label.style.gridColumnStart = colIndex + 1;
-          monthLabels.appendChild(label);
-        }
+      row.appendChild(cell);
+      if ((startDay + d) % 7 === 0 || d === totalDays) {
+        calendarBody.appendChild(row);
+        row = document.createElement("tr");
       }
     }
 
-    function generateLegend(activityType) {
-      legend.innerHTML = "";
-      const textLess = document.createElement("span");
-      textLess.textContent = "Less";
-      legend.appendChild(textLess);
+    updateNavButtons();
+  }
 
-      for (let i = 0; i < 5; i++) {
-        const box = document.createElement("div");
-        box.classList.add("legend-box", i ? `${activityType}-level-${i}` : "level-0");
-        legend.appendChild(box);
-      }
-
-      const textMore = document.createElement("span");
-      textMore.textContent = "More";
-      legend.appendChild(textMore);
+  prevMonth.addEventListener('click', () => {
+    const currentKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    const index = eventMonths.indexOf(currentKey);
+    if (index > 0) {
+      const [year, month] = eventMonths[index - 1].split('-').map(Number);
+      currentDate = new Date(year, month - 1);
+      renderCalendar(currentDate);
     }
+  });
 
-    activitySelector.addEventListener("change", () => generateCalendar(yearSelector.value, activitySelector.value));
-    yearSelector.addEventListener("change", () => generateCalendar(yearSelector.value, activitySelector.value));
+  nextMonth.addEventListener('click', () => {
+    const currentKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    const index = eventMonths.indexOf(currentKey);
+    if (index < eventMonths.length - 1) {
+      const [year, month] = eventMonths[index + 1].split('-').map(Number);
+      currentDate = new Date(year, month - 1);
+      renderCalendar(currentDate);
+    }
+  });
 
-    generateCalendar(2025, "sleep");
-  </script>
+  eventPanel.addEventListener('mouseleave', () => {
+    eventPanel.classList.remove('active');
+  });
+
+  // Start on the first event month if current month has no events
+  const currentKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+  if (!eventMonths.includes(currentKey)) {
+    const [year, month] = eventMonths[0].split('-').map(Number);
+    currentDate = new Date(year, month - 1);
+  }
+
+  renderCalendar(currentDate);
+</script>
 </body>
 </html>
