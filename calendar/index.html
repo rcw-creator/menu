@@ -53,11 +53,11 @@
     cursor: pointer;
     width: 24px;
     text-align: center;
-    visibility: visible;
   }
 
-  .month-nav button.hidden {
-    visibility: hidden; /* instead of display:none to preserve spacing */
+  .month-nav button.disabled {
+    opacity: 0.2;
+    cursor: default;
   }
 
   table {
@@ -194,8 +194,8 @@
     const currentKey = `${year}-${String(month + 1).padStart(2, '0')}`;
     const currentIndex = eventMonths.indexOf(currentKey);
 
-    prevMonth.classList.toggle("hidden", currentIndex <= 0);
-    nextMonth.classList.toggle("hidden", currentIndex >= eventMonths.length - 1);
+    prevMonth.classList.toggle("disabled", currentIndex <= 0);
+    nextMonth.classList.toggle("disabled", currentIndex >= eventMonths.length - 1);
   }
 
   function renderCalendar(date) {
@@ -246,6 +246,7 @@
   }
 
   prevMonth.addEventListener('click', () => {
+    if (prevMonth.classList.contains("disabled")) return;
     const currentKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     const index = eventMonths.indexOf(currentKey);
     if (index > 0) {
@@ -256,6 +257,7 @@
   });
 
   nextMonth.addEventListener('click', () => {
+    if (nextMonth.classList.contains("disabled")) return;
     const currentKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
     const index = eventMonths.indexOf(currentKey);
     if (index < eventMonths.length - 1) {
@@ -269,7 +271,6 @@
     eventPanel.classList.remove('active');
   });
 
-  // Start on the first event month if current month has no events
   const currentKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
   if (!eventMonths.includes(currentKey)) {
     const [year, month] = eventMonths[0].split('-').map(Number);
